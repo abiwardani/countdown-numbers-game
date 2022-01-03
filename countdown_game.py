@@ -1,3 +1,5 @@
+import solution_parser as sp
+
 class Countdown:
     def __init__(self, targetSum, numbers, useAll = False):
         self.targetSum = targetSum
@@ -16,7 +18,13 @@ class Countdown:
         self.solution = ""
 
         #start recursive calls
-        return self.searchRecursive(self.targetSum, self.numbers, 0, "")
+        solution = self.searchRecursive(self.targetSum, self.numbers, 0, "")
+
+        if (solution):
+            spObject = sp.SolutionParser()
+            return spObject.toClassicFormat(solution)
+        else:
+            return None
     
     def searchRecursive(self, targetSum, numbers, repeat, path):
         #if target sum is 0, either initial target was 0 or result of addition or subtraction; and solution does not have to use all
@@ -39,22 +47,30 @@ class Countdown:
             
             return self.memo[str(targetSum)+"|"+str(numbers)]
         
-        #solution within subtract branch?
+        #solution within subtract left branch?
         minus = self.searchRecursive(targetSum-numbers[0], numbers[1::], 0, "+"+str(numbers[0])+path)
         self.memo[str(targetSum-numbers[0])+"|"+str(numbers[1::])] = minus #memoize
         dim = minus
-        if (dim == False): #solution not within subtract branch; solution within addition branch?
-            plus = self.searchRecursive(targetSum+numbers[0], numbers[1::], 0, "-"+str(numbers[0])+path)
-            self.memo[str(targetSum+numbers[0])+"|"+str(numbers[1::])] = plus #memoize
-            dim = dim or plus
-            if (dim == False and numbers[0] != 0): #solution not within addition branch and current number not 0; solution within multiplication branch?
-                multiply = self.searchRecursive(targetSum*numbers[0], numbers[1::], 0, "/"+str(numbers[0])+path)
-                self.memo[str(targetSum*numbers[0])+"|"+str(numbers[1::])] = multiply #memoize
-                dim = dim or multiply
-                if (dim == False and numbers[0] != 0): #solution not within multiplication branch and current number not 0; solution within division branch?
-                    divide = self.searchRecursive(targetSum/numbers[0], numbers[1::], 0, "*"+str(numbers[0])+path)
-                    self.memo[str(targetSum/numbers[0])+"|"+str(numbers[1::])] = divide #memoize
-                    dim = dim or divide
+        if (dim == False): #solution not within subtract left branch; solution within subtract right branch?
+            minus = self.searchRecursive(numbers[0]-targetSum, numbers[1::], 0, "*(-1)+"+str(numbers[0])+path)
+            self.memo[str(targetSum-numbers[0])+"|"+str(numbers[1::])] = minus #memoize
+            dim = dim or minus
+            if (dim == False): #solution not within subtract right branch; solution within addition branch?
+                plus = self.searchRecursive(targetSum+numbers[0], numbers[1::], 0, "-"+str(numbers[0])+path)
+                self.memo[str(targetSum+numbers[0])+"|"+str(numbers[1::])] = plus #memoize
+                dim = dim or plus
+                if (dim == False and numbers[0] != 0): #solution not within addition branch and current number not 0; solution within multiplication branch?
+                    multiply = self.searchRecursive(targetSum*numbers[0], numbers[1::], 0, "/"+str(numbers[0])+path)
+                    self.memo[str(targetSum*numbers[0])+"|"+str(numbers[1::])] = multiply #memoize
+                    dim = dim or multiply
+                    if (dim == False and numbers[0] != 0): #solution not within multiplication branch and current number not 0; solution within division left branch?
+                        divide = self.searchRecursive(targetSum/numbers[0], numbers[1::], 0, "*"+str(numbers[0])+path)
+                        self.memo[str(targetSum/numbers[0])+"|"+str(numbers[1::])] = divide #memoize
+                        dim = dim or divide
+                        if (dim == False and numbers[0] != 0): #solution not within multiplication branch and current number not 0; solution within division left branch?
+                            divide = self.searchRecursive(numbers[0]/targetSum, numbers[1::], 0, "^(-1)*"+str(numbers[0])+path)
+                            self.memo[str(numbers[0]/targetSum)+"|"+str(numbers[1::])] = divide #memoize
+                            dim = dim or divide
 
         #repeat denotes number of times recursion has been called without eliminating a number
         #if program has iterated throughout the whole list of numbers
